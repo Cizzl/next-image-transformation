@@ -8,22 +8,30 @@ services:
       - ALLOWED_REMOTE_DOMAINS=*
       - IMGPROXY_URL=http://imgproxy:8080
     healthcheck:
-      test: "wget -qO- http://localhost:3000/health || exit 1"
-      interval: 2s
-      timeout: 10s
-      retries: 5
+      test: "wget -qO- http://127.0.0.1:3000/health || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     depends_on:
       imgproxy:
         condition: service_healthy
+    networks:
+      - image_network
   imgproxy:
     image: darthsim/imgproxy
     environment:
       - IMGPROXY_ENABLE_WEBP_DETECTION=true
-      - IMGPROXY_ENABLE_AVIF_DETECTION=true
       - IMGPROXY_JPEG_PROGRESSIVE=true
       - IMGPROXY_USE_ETAG=true
     healthcheck:
-      test: [ "CMD", "imgproxy", "health" ]
-      interval: 2s
-      timeout: 10s
-      retries: 5
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - image_network
+networks:
+  image_network:
+    driver: bridge
